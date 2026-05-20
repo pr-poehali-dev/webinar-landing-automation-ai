@@ -87,19 +87,202 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+// ─── Quiz ────────────────────────────────────────────────────────────────────
+type QuizStep =
+  | { type: "choice"; question: string; icon: string; options: string[] }
+  | { type: "input"; question: string; icon: string; fields: { key: string; label: string; placeholder: string; inputType: string }[] };
+
+const QUIZ_STEPS: QuizStep[] = [
+  {
+    type: "choice",
+    question: "Какова ваша должность?",
+    icon: "User",
+    options: ["Инженер / технолог", "Руководитель производства", "IT-директор / CTO", "Собственник / CEO", "Другое"],
+  },
+  {
+    type: "choice",
+    question: "В какой отрасли работаете?",
+    icon: "Factory",
+    options: ["Металлургия и машиностроение", "Химия и нефтепереработка", "Пищевая промышленность", "Энергетика", "Другая отрасль"],
+  },
+  {
+    type: "choice",
+    question: "Размер вашего предприятия?",
+    icon: "Building2",
+    options: ["До 100 сотрудников", "100 – 500 сотрудников", "500 – 2000 сотрудников", "Более 2000 сотрудников"],
+  },
+  {
+    type: "choice",
+    question: "Ваш опыт с автоматизацией и ИИ?",
+    icon: "Cpu",
+    options: ["Только начинаю разбираться", "Изучаю теорию, пилотов не было", "Есть 1-2 реализованных проекта", "Активно внедряем, хотим масштабировать"],
+  },
+  {
+    type: "choice",
+    question: "Главная цель участия в вебинаре?",
+    icon: "Target",
+    options: ["Понять, с чего начать", "Найти подходящие инструменты", "Изучить конкретные кейсы", "Познакомиться с экспертами"],
+  },
+  {
+    type: "input",
+    question: "Финальный шаг — подтвердите регистрацию",
+    icon: "CheckCircle",
+    fields: [
+      { key: "name", label: "Ваше имя", placeholder: "Иван Петров", inputType: "text" },
+      { key: "email", label: "Email", placeholder: "ivan@company.ru", inputType: "email" },
+      { key: "company", label: "Компания / предприятие", placeholder: "ООО «Ваше предприятие»", inputType: "text" },
+    ],
+  },
+];
+
+function QuizForm({ seatsLeft }: { seatsLeft: number }) {
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string | Record<string, string>>>({});
+  const [inputData, setInputData] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+
+  const current = QUIZ_STEPS[step];
+  const progress = ((step) / QUIZ_STEPS.length) * 100;
+
+  const handleChoice = (option: string) => {
+    setSelected(option);
+    setTimeout(() => {
+      setAnswers({ ...answers, [step]: option });
+      setSelected(null);
+      setStep(step + 1);
+    }, 300);
+  };
+
+  const handleInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setAnswers({ ...answers, [step]: inputData });
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="rounded-2xl p-10 text-center animate-fade-in-scale"
+        style={{ background: "#0A0F1A", border: "1px solid rgba(0,255,136,0.4)" }}>
+        <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6"
+          style={{ background: "rgba(0,255,136,0.08)", border: "2px solid rgba(0,255,136,0.5)" }}>
+          <Icon name="CheckCircle" size={40} style={{ color: "#00FF88" }} />
+        </div>
+        <div className="text-xs uppercase tracking-widest mb-3 font-semibold" style={{ color: "#00FF88" }}>Готово!</div>
+        <h3 className="text-2xl font-bold uppercase mb-3" style={{ color: "#E0EAFF" }}>Вы зарегистрированы!</h3>
+        <p className="mb-6" style={{ color: "#6678A0" }}>Детали вебинара и бонусный чек-лист уже летят на вашу почту ✈️</p>
+        <div className="rounded-xl p-4" style={{ background: "rgba(255,107,0,0.08)", border: "1px solid rgba(255,107,0,0.2)" }}>
+          <p className="text-sm" style={{ color: "#FF9500" }}>Добавьте в календарь: <strong>15 июня 2026, 10:00</strong></p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: "#0A0F1A", border: "1px solid #1A2440" }}>
+      {/* Progress bar */}
+      <div className="h-1 w-full" style={{ background: "#0D1626" }}>
+        <div className="h-1 transition-all duration-500"
+          style={{ width: `${progress}%`, background: "linear-gradient(90deg, #FF6B00, #FF9500)" }} />
+      </div>
+
+      <div className="p-8">
+        {/* Step counter */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex gap-1.5">
+            {QUIZ_STEPS.map((_, i) => (
+              <div key={i} className="rounded-full transition-all duration-300"
+                style={{
+                  width: i === step ? 20 : 8, height: 8,
+                  background: i < step ? "#FF6B00" : i === step ? "#FF6B00" : "#1A2440"
+                }} />
+            ))}
+          </div>
+          <span className="text-xs uppercase tracking-widest" style={{ color: "#556080" }}>
+            {step + 1} / {QUIZ_STEPS.length}
+          </span>
+        </div>
+
+        {/* Question */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(255,107,0,0.1)", border: "1px solid rgba(255,107,0,0.3)" }}>
+            <Icon name={current.icon} fallback="Star" size={18} style={{ color: "#FF6B00" }} />
+          </div>
+          <h3 className="text-lg font-bold uppercase" style={{ color: "#E0EAFF" }}>{current.question}</h3>
+        </div>
+
+        {/* Choices */}
+        {current.type === "choice" && (
+          <div className="space-y-2">
+            {current.options.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => handleChoice(opt)}
+                className="w-full text-left px-5 py-3.5 rounded-xl transition-all duration-200 flex items-center justify-between group"
+                style={{
+                  background: selected === opt ? "rgba(255,107,0,0.15)" : "rgba(255,255,255,0.03)",
+                  border: selected === opt ? "1px solid rgba(255,107,0,0.6)" : "1px solid #1A2440",
+                  color: selected === opt ? "#FF9500" : "#C0CCDD",
+                }}
+              >
+                <span className="text-sm font-medium">{opt}</span>
+                <Icon name="ChevronRight" size={16} style={{ color: selected === opt ? "#FF6B00" : "#2A3A55", transition: "transform 0.2s", transform: selected === opt ? "translateX(4px)" : "none" }} />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Input fields */}
+        {current.type === "input" && (
+          <form onSubmit={handleInputSubmit} className="space-y-4">
+            <SeatsBar total={200} left={seatsLeft} />
+            <div className="mt-4 space-y-4">
+              {current.fields.map(({ key, label, placeholder, inputType }) => (
+                <div key={key}>
+                  <label className="block text-xs uppercase tracking-widest mb-2 font-medium" style={{ color: "#556080" }}>{label}</label>
+                  <input
+                    type={inputType}
+                    placeholder={placeholder}
+                    required
+                    value={inputData[key] || ""}
+                    onChange={(e) => setInputData({ ...inputData, [key]: e.target.value })}
+                    className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-300"
+                    style={{ background: "#060A14", border: "1px solid #1A2440", color: "#E0EAFF", fontFamily: "'IBM Plex Sans', sans-serif" }}
+                    onFocus={(e) => { e.target.style.borderColor = "rgba(255,107,0,0.5)"; e.target.style.boxShadow = "0 0 20px rgba(255,107,0,0.1)"; }}
+                    onBlur={(e) => { e.target.style.borderColor = "#1A2440"; e.target.style.boxShadow = "none"; }}
+                  />
+                </div>
+              ))}
+            </div>
+            <button type="submit" className="glow-btn w-full py-4 rounded-xl text-lg font-bold uppercase tracking-wider"
+              style={{ color: "#050810", fontFamily: "'Oswald', sans-serif" }}>
+              Зарегистрироваться бесплатно
+            </button>
+            <p className="text-center text-xs" style={{ color: "#3A4A66" }}>
+              Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+            </p>
+          </form>
+        )}
+
+        {/* Back button */}
+        {step > 0 && current.type !== "input" && (
+          <button onClick={() => setStep(step - 1)} className="mt-4 flex items-center gap-1 text-xs transition-colors hover:text-orange-400"
+            style={{ color: "#3A4A66" }}>
+            <Icon name="ChevronLeft" size={14} style={{ color: "currentColor" }} /> Назад
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Page ───────────────────────────────────────────────────────────────
 export default function Index() {
   const webinarDate = new Date("2026-06-15T10:00:00");
   const time = useCountdown(webinarDate);
-  const [formData, setFormData] = useState({ name: "", email: "", company: "" });
-  const [submitted, setSubmitted] = useState(false);
   const [seatsLeft] = useState(47);
   const heroRef = useRef<HTMLDivElement>(null);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-  };
 
   const program = [
     { time: "10:00", title: "Открытие. Состояние автоматизации 2026", desc: "Обзор рынка, ключевые тренды и почему ИИ меняет всё прямо сейчас" },
@@ -416,7 +599,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* ── Registration ── */}
+      {/* ── Registration Quiz ── */}
       <section className="py-20 grid-bg" id="register">
         <div className="container">
           <div className="max-w-xl mx-auto">
@@ -425,58 +608,12 @@ export default function Index() {
               <h2 className="text-4xl md:text-5xl font-bold uppercase mb-4" style={{ color: "#E0EAFF" }}>
                 Занять <span className="gradient-text-orange">место</span>
               </h2>
-              <p style={{ color: "#6678A0" }}>Осталось <span style={{ color: "#00FF88", fontWeight: "bold" }}>{seatsLeft} мест</span> из 200. Регистрация бесплатна.</p>
+              <p style={{ color: "#6678A0" }}>
+                Ответьте на 5 вопросов — подберём программу под вас.{" "}
+                <span style={{ color: "#00FF88", fontWeight: "bold" }}>Осталось {seatsLeft} мест.</span>
+              </p>
             </div>
-
-            {submitted ? (
-              <div className="rounded-2xl p-10 text-center animate-fade-in-scale"
-                style={{ background: "#0A0F1A", border: "1px solid rgba(0,255,136,0.4)" }}>
-                <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-                  style={{ background: "rgba(0,255,136,0.1)", border: "2px solid rgba(0,255,136,0.5)" }}>
-                  <Icon name="CheckCircle" size={32} style={{ color: "#00FF88" }} />
-                </div>
-                <h3 className="text-2xl font-bold uppercase mb-3" style={{ color: "#E0EAFF" }}>Вы зарегистрированы!</h3>
-                <p style={{ color: "#6678A0" }}>Детали вебинара и бонусный чек-лист уже летят на вашу почту ✈️</p>
-              </div>
-            ) : (
-              <div className="rounded-2xl p-8" style={{ background: "#0A0F1A", border: "1px solid #1A2440" }}>
-                <SeatsBar total={200} left={seatsLeft} />
-                <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-                  {[
-                    { field: "name", label: "Ваше имя", placeholder: "Иван Петров", type: "text" },
-                    { field: "email", label: "Email", placeholder: "ivan@company.ru", type: "email" },
-                    { field: "company", label: "Компания / предприятие", placeholder: "ООО «Ваше предприятие»", type: "text" },
-                  ].map(({ field, label, placeholder, type }) => (
-                    <div key={field}>
-                      <label className="block text-xs uppercase tracking-widest mb-2 font-medium" style={{ color: "#556080" }}>{label}</label>
-                      <input
-                        type={type}
-                        placeholder={placeholder}
-                        required
-                        value={formData[field as keyof typeof formData]}
-                        onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                        className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all duration-300"
-                        style={{
-                          background: "#060A14",
-                          border: "1px solid #1A2440",
-                          color: "#E0EAFF",
-                          fontFamily: "'IBM Plex Sans', sans-serif"
-                        }}
-                        onFocus={(e) => { e.target.style.borderColor = "rgba(255,107,0,0.5)"; e.target.style.boxShadow = "0 0 20px rgba(255,107,0,0.1)"; }}
-                        onBlur={(e) => { e.target.style.borderColor = "#1A2440"; e.target.style.boxShadow = "none"; }}
-                      />
-                    </div>
-                  ))}
-                  <button type="submit" className="glow-btn w-full py-4 rounded-xl text-lg font-bold uppercase tracking-wider mt-2"
-                    style={{ color: "#050810", fontFamily: "'Oswald', sans-serif" }}>
-                    Зарегистрироваться бесплатно
-                  </button>
-                  <p className="text-center text-xs" style={{ color: "#3A4A66" }}>
-                    Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
-                  </p>
-                </form>
-              </div>
-            )}
+            <QuizForm seatsLeft={seatsLeft} />
           </div>
         </div>
       </section>
